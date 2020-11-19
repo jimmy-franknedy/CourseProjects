@@ -1,1 +1,5 @@
-README
+Details of Assignments
+Lab 2: Using MML Logic in order to create a guessing game that involves the addition of 2 values by a logic gate adder
+Lab 3: This program takes an integer input and outputs the integer's factorial
+Lab 4: Utilizes $t and $s registers efficiently in order to take a Roman Numeral input and outputs the binary representation.
+Lab 5: Utilizes $ra, jal functions and the stack in order to create a gambling game
