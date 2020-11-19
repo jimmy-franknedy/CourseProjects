@@ -1,2 +1,2 @@
 # CourseProjects
-Coding Projects from programming courses at UCSC
+Coding assignments from programming courses at UCSC
