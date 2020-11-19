@@ -1,1 +1,4 @@
 Details of Assignment
+ASG 1: Overloading basic integer operators to perform arbitrary precision integer arithmetic in the style of dc(1)
+ASG 2: Maintaining a tree structure with a simple hierarchy, maintained by a map of functions. The program will involve object-oriented programming using virtual functions, and displatching functions from a table of functions.
+ASG 3: Implementing template code and not using any template classes from the standard library in order to create an abstract data type.
