@@ -3,5 +3,7 @@ PA1 : Utlizes recursion to print out all 𝑘-element subsets of the 𝑛-elemen
       where both 𝑛 and 𝑘 are given on the command line. 
 PA2 : Utilizes recursion to find all solutions to the n-Queens problem,
       for 1 ≤ 𝑛 ≤ 15.
-PA4:  
+PA4 : Implements an IntegerQueue ADT in C based on a linked list data structure. Uses the IntegerQueue to 
+      simulate a set of jobs performed by a set of processors, where there are more jobs than
+      processors, and therefore some jobs may have to wait in a queue.
 PA5 : Create a Dictionary ADT Based on a Hash Table
