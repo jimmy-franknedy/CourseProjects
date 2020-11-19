@@ -1,4 +1,6 @@
 Details of Assignments
-PA2 :
-PA3 :
-PA5 : 
+PA2 : Creating a BigInteger ADT capable of performing arithmetic operations on arbitrarily large signed integers. 
+      The underlying data structure for this ADT will be a List of longs.
+PA3 : Implementing a Graph ADT and associated algorithms in C
+PA5 : Build a Dictionary ADT in C and use it to alphabetize the lines in a file. The underlying data structure
+      will be based on a Binary Search Tree (BST)
