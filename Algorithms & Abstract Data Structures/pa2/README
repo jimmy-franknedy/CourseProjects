@@ -1,0 +1,17 @@
+/*********************************************************************************
+* Name: 			Jimmy Franknedy
+* CruzID:			jfrankne
+* Course: 			CSE 101 Spring 2020
+* File name: 		README
+* File Description: Descriptions of files Submitted
+*********************************************************************************/
+
+Arithmetic.c 		Main function for this PA
+BigInteger.c 		BigInteger Function File
+BigInteger.h 		BigInteger Function Prototype File
+BigIntegerTest.c 	BigInteger Test File
+List.c 				List Function File
+List.h 				List Prototype File
+ListTest.c 			List Test File
+README 				Files submitted for the project
+Makefile 			Builds the code

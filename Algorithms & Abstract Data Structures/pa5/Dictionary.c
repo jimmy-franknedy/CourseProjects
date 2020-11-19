@@ -1,571 +1,535 @@
-// Name:		 Jimmy Franknedy
-// CruzID:    	 jfrankne
-// Class: 		 CSE-015
-// Date:		 12/5/2019
-// Project Name: Dictionary.c
-// Project Desc: The goal of this project is to recreate the Dictionary ADT 
-//				 from pa3, but now based on a hash table instead of a linked list.
-
-#include <stdio.h>
+/*********************************************************************************
+* Name: 			Jimmy Franknedy
+* CruzID:			jfrankne
+* Course: 			CSE 101 Spring 2020
+* File name: 		Dictionary.c
+* File Description: Dictionary Function Code
+*********************************************************************************/
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 #include "Dictionary.h"
 
 // Exported type --------------------------------------------------------------
-
-// the hash value
-const int tableSize = 101;
-
-// Additional Helper Functions (Prototypes)------------------------------------
-unsigned int rotate_left(unsigned int value, int shift);
-unsigned int pre_hash(char* input);
-int hash(char* key);
-void makeErase(Dictionary D);
-
-// Additional Helper Functions (Definition)------------------------------------
-// rotate_left()
-// rotate the bits in an unsigned int
-unsigned int rotate_left(unsigned int value, int shift) 
-{
-	int sizeInBits = 8*sizeof(unsigned int);
-	shift = shift & (sizeInBits - 1);
-	if (shift == 0) return value;
- 	return (value << shift) | (value >> (sizeInBits - shift));
-}
-
-// pre_hash()
-// turn a string into an unsigned int
-unsigned int pre_hash(char* input) 
-{
-	unsigned int result = 0xBAE86554;
-	while (*input) 
-	{
-		result ^= *input++;
- 		result = rotate_left(result, 5);
- 	}
- 	return result;
-}
-// hash()
-// turns a string into an int in the range 0 to tableSize-1
-int hash(char* key) return pre_hash(key)%tableSize;
-
-//---------------------------------------------------------------------
-// NodeObj 
-typedef struct NodeObj
-{
-	// pointer to the pair value of "key"    - UNIQUE
-	char* key;
-
-	// pointer to the pair value of "value"  - COMMON
-	char* value;
-
-	// pointer to the next item in the linked list
-	struct NodeObj* next;
-
-	// pointer to the prev item in the linked list
-	struct NodeObj* prev;
-
-} NodeObj;
-
-// creating instance of Node
 typedef struct NodeObj* Node;
 
-// newNode()
-// Constructor for Node Type
-// Node newNode(char* key, char* value)
-Node newNode(char* k, char* v)
+typedef struct NodeObj
 {
-	// allocate space on the heap for the size of NodeObj
-	Node N = malloc(sizeof(NodeObj));
+	KEY_TYPE key;
+	VAL_TYPE value;
+	struct NodeObj* right;
+	struct NodeObj* left;
+	struct NodeObj* parent;
+}NodeObj;
 
-	// check to see if allocation was valid
-	assert(N!=NULL);
-
-	// set the custom "key" value to the "key" value in the Node
-	N->key = k;
-
-	// set the custom "value" value to the "value" value in the Node
-	N->value = v;
-
-	// isolate the node by setting it's next and previous to NULL
-	N->next = N->prev = NULL;
-
-	// return the created node
-	return N;
-}
-
-// freeNode()
-// Destructor for Node Type
+void freeNode(Node* pN);
 void freeNode(Node* pN)
 {
-	// check to see if the values of pN and *pN are not NULL
 	if( pN!=NULL && *pN!=NULL )
 	{
-		// free the memory pointed to by pN
 		free(*pN);
-
-		// set pN to point to Null
 		*pN = NULL;
    	}
 }
-// NodeObj 
-//---------------------------------------------------------------------
 
-//---------------------------------------------------------------------
-// PageObj
-typedef struct PageObj
+
+Node newNode(KEY_TYPE k, VAL_TYPE v)
 {
-	// pointer to the first Node in list
-	Node head;
-
-	// pointer to the last Node in list
-	Node tail;
-
-	// counter for number of items in the Dictionary 	// not sure if you're gonna need	
-	int numPairs;										// the "number of pages"
-
-} PageObj;
-
-// create an instance of Page
-typedef struct PageObj* Page;
-
-// newPage()
-// Constructor for the Page ADT (i.e LL).
-Page newPage()
-{
-	// allocate memory on the heap for the size of a NodeObj
-	Page P = malloc(sizeof(PageObj));
-
-	// check to see if the memory allocated correctly
-	assert(P != NULL);
-
-	// initialize the head Node to point to nothing (i.e NULL)
-	P->head = NULL;
-
-	// initialize the tail Node to point to nothing (ie. NULL)
-	P->tail = NULL;
-
-	// set the number of elements (or pages) (i.e numPairs = 0)
-	P->numPairs = 0;
-
-	// return the Dictionary 'D'
-	return P;
+	Node N = malloc(sizeof(NodeObj));
+	assert(N!=NULL);
+	N->key = k;
+	N->value = v;
+	N->right = N->left = N->parent = NULL;
+	return N;
 }
 
-// deleteAllPages()
-// deletes all Nodes in the Page P
-void deleteAllPages(Node N);
-
-// Pre: make sure you are starting at the head!
-void deleteAllPages(Node N)
-{
-	// if you haven't reach the tail yet
-	if(N != NULL)
-	{
-		// recurse until you find the tail
-		deleteAllPages(N->next);
-
-		// recurse back and free the memory on the heap
-		freeNode(&N);
-	}
-}
-
-// makePagesEmpty()
-// Reset P to the empty state, the empty set of pairs.
-void makePagesEmpty(Page P)
-{
-	// check to see if the Dictionary is not NULL
-	if(P == NULL)
-	{
-		fprintf(stderr, "Dictionary Error: calling makeEmpty() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
-	}
-
-	// make sure you are passing in the HEAD of the linked list!
-	deleteAllPages(P->head);
-
-	// set the head & tail Node to point to nothing (i.e NULL)
-	P->head = NULL;
-	P->tail = NULL;
-
-	// reset the number of pairs in the Dictionary
-	P->numPairs = 0;
-}
-
-// freePages()
-// Destructor for the Page ADT.
-void freePages(Page pP)
-{
-	// check if the value of pD and *pD are not NULL
-	if(pP != NULL)
-	{
-		// clear the Dictionary
-		makePagesEmpty(pP);
-
-		// free the memory pointed to by pD
-		free(pP);
-
-		// set that pointer to point to NULL
-		pP = NULL;
-	}
-}
-
-
-// PageObj
-//----------------------------------------------------------------------
-
-//---------------------------------------------------------------------
-// DictionaryObj
 typedef struct DictionaryObj
 {
-	// create a "page" variable that points to a "page" array
-	Page* P;
+	Node root;
+	Node max;
+	Node min;
+	Node cursor;
+	int size;
+	int uniqueKeys;
+}DictionaryObj;
 
-	// hold the number of elements in the Dictionary Array
-	int usedPages;
+// Helper Function ------------------------------------------------------------
 
-	// hold the max pages:
-	int maxPages;
+void printKeysInOrderHelper (FILE* out, Node N);
+void printKeysInOrderHelper (FILE* out, Node N)
+{
+	if(N != NULL )
+	{
+		printKeysInOrderHelper(out,N->left);
+		fprintf(stdout,KEY_FORMAT,N->key);
+		fprintf(out,KEY_FORMAT,N->key);
+		printKeysInOrderHelper(out,N->right);
+	}
+}
 
-} DictionaryObj;
+void printKeysInOrder (FILE* out, Dictionary D)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Helper function: calling printKeysInOrder() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	printKeysInOrderHelper(out,D->root);
+}
 
-// create an instance of Dictionary
-typedef struct DictionaryObj* Dictionary;
+
+
+void inOrderTreeWalk (Node N);
+void inOrderTreeWalk (Node N)
+{
+	if(N != NULL)
+	{
+		inOrderTreeWalk(N->left);
+		fprintf(stdout,KEY_FORMAT,N->key);
+		fprintf(stdout," ");
+		fprintf(stdout,VAL_FORMAT,N->value);
+		fprintf(stdout,"\n");
+		inOrderTreeWalk(N->right);
+	}
+}
+
+Node search (Dictionary D, KEY_TYPE k);
+Node search (Dictionary D, KEY_TYPE k)
+{
+	if(lookup(D,k) != VAL_UNDEF)
+	{
+		Node x = D->root;
+		int match = 0;
+		while(match == 0)
+		{
+			if(KEY_CMP(k,x->key) == 0) match = 1;
+			else if(KEY_CMP(k,x->key) < 1) x = x->left;
+			else x = x->right;
+		}
+		return x;
+	}
+	return NULL;
+}
+
+Node TreeMinimum (Node N);
+Node TreeMinimum (Node N)
+{
+	if(N == NULL)
+	{
+		fprintf(stderr, "Helper function: calling TreeMinimum() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	while(N->left != NULL) N = N->left;
+	return N;
+}
+
+Node TreeMaximum (Node N);
+Node TreeMaximum (Node N)
+{
+	if(N == NULL)
+	{
+		fprintf(stderr, "Helper function: calling TreeMaximum() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	while(N->right != NULL) N = N->right;
+	return N;
+}
+
+Node TreeSuccessor (Node N);
+Node TreeSuccessor (Node N)
+{
+	if(N == NULL)
+	{
+		fprintf(stderr, "Helper function: calling TreeSuccessor() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(N->right != NULL) return (TreeMinimum(N->right));
+	Node Y = N->parent;
+	while(Y != NULL && Y->right != NULL && (KEY_CMP(N->key,Y->right->key) == 0))
+	{
+		N = Y;
+		Y = Y->parent;
+	}
+	return Y;
+}
+
+Node TreePredecessor (Node N);
+Node TreePredecessor (Node N)
+{
+	if(N == NULL)
+	{
+		fprintf(stderr, "Helper function: calling TreePredecessor() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(N->left != NULL) return (TreeMaximum(N->left));
+	Node Y = N->parent;
+	while(Y != NULL && Y->left != NULL && (KEY_CMP(N->key,Y->left->key) == 0))
+	{
+		N = Y;
+		Y = Y->parent;
+	}
+	return Y;
+}
+
+void checkKey (Node N);
+void checkKey (Node N)
+{
+	if(N == NULL)
+	{
+		fprintf(stderr, "Helper function: calling checkKey() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	fprintf(stdout,"key: %s\n",N->key);
+}
+
+void checkVal (Node N);
+void checkVal (Node N)
+{
+	if(N == NULL)
+	{
+		fprintf(stderr, "Helper function: calling checkVal() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	fprintf(stdout,"val: %d\n",N->value);
+}
+
+void Transplant (Dictionary D, Node U, Node V);
+void Transplant (Dictionary D, Node U, Node V)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Helper function: calling Transplant() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(U == NULL)
+	{
+		fprintf(stderr, "Helper function: calling Transplant() on NULL U reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(U->parent == NULL) D->root = V;
+	else if (U == U->parent->left) U->parent->left = V;
+	else U->parent->right = V;
+	if(V != NULL) V->parent = U->parent;
+}
+
+
+// Constructors-Destructors ---------------------------------------------------
 
 // newDictionary()
-// Constructor for the Dictionary ADT.
-Dictionary newDictionary()
+// Creates a new empty Dictionary. If unique==false (0), then the Dictionary 
+// will accept duplicate keys, i.e. distinct pairs with identical keys. If 
+// unique==true (1 or any non-zero value), then duplicate keys will not be 
+// accepted. In this case, the operation insert(D, k) will enforce the 
+// precondition: lookup(D, k)==VAL_UNDEF
+Dictionary newDictionary(int unique)
 {
-	// create the "page" array of pages
 	Dictionary D = malloc(sizeof(DictionaryObj));
-
-	// check if they are null
 	assert(D != NULL);
-
-	// set the number of pages in the Dictionary to 0
-	D->usedPages = 0;
-
-	// hold the max pages?
-	D->maxPages = tableSize;
-
-	// create the set the "page" pointer to an array of "page(s)"
-	D->P = calloc(tableSize,sizeof(PageObj));
-
-	for(int i = 0; i<tableSize; i++) D->P[i] = newPage();
+	D->root = D->min = D->max = D->cursor = NULL;
+	D->size = 0;
+	D->uniqueKeys = unique;
 	return D;
 }
 
 // freeDictionary()
-// Destructor for the Dictionary ADT.
+// Frees heap memory associated with *pD, sets *pD to NULL.
 void freeDictionary(Dictionary* pD)
 {
 	if(pD != NULL && *pD != NULL)
 	{
-		makeErase(*pD);
+		makeEmpty(*pD);
 		free(*pD);
 		*pD = NULL;
 	}
 }
 
-// Node findKey 
-// Returns the Node containing the desired "key" in Dictionary D or NULL if Node does not exist.
 
-// recall the return values of strcmp(string1,string2), which gets its difference by subtracting 
-// the ASCII values of string1 by string2 (i.e string1 - string2)
-//
-// >0: if string1 > string2
-//  0: if they are the same
-// <0: if string1 < string2
-
-Node findKey(Dictionary D, char* key);
-
-Node findKey(Dictionary D, char* key)
-{
-	// check to see if the Dictionary is not NULL
-	if(D == NULL)
-	{
-		fprintf(stderr, "Node findKey: calling findKey() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
-	}
-
-	//for(int i = 0; i < D->maxPages; i++)
-	//{
-		if(D->P[hash(key)]->head != NULL)
-		{
-			// create a temp Node!
-			Node temp = D->P[hash(key)]->head;
-			
-			// continue through the linked list until you hit the end
-			// for(int i = 0; i < D->P[i]->numPairs; i++)
-			while(temp != NULL)
-			{
-				// variable holding string compare result of the temp's key and the inputted key
-				// int StringCompareResult = strcmp(temp->key,key);
-
-				// if the strings match
-				if(!(strcmp(temp->key,key)))
-				{
-					// return the node
-					return temp;
-				}
-				// if the strings don't match, continue to through the linked list and increment to the next Node
-				temp = temp->next;
-			}
-			// freeNode(&temp);
-		}
-	//}
-	// return the Node
-	return NULL;	
-}
-
-// int countChars
-int countChars(Dictionary D);
-int countChars(Dictionary D)
-{
-	int count = 0;
-	for(int i = 0; i<D->maxPages; i++)
-	{
-		if(D->P[i]->head != NULL)
-		{
-			Node temp = D->P[i]->head;
-			while(temp != NULL)
-			{
-				count += strlen(temp->key)+strlen(temp->value)+2;
-				temp = temp->next;
-			}
-			freeNode(&temp);
-		}
-	}
-	return count;
-}
-// DictionaryObj
-//---------------------------------------------------------------------
+// Access functions -----------------------------------------------------------
 
 // size()
-// Return the number of (key, value) pairs in Dictionary D.
+// Returns the number of (key, value) pairs in Dictionary D.
 int size(Dictionary D)
 {
-	// check to see if the Dictionary is not NULL
 	if(D == NULL)
 	{
-		fprintf(stderr, "Dictionary Error: calling size() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Access function: calling size() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
 	}
-	return D->usedPages;
+	return D->size;
+}
+
+// getUnique()
+// Returns true (1) if D requires that all pairs have unique keys. Returns
+// false (0) if D accepts distinct pairs with identical keys.
+int getUnique(Dictionary D)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Access function: calling getUnique() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	return D->uniqueKeys;
 }
 
 // lookup()
-// If D contains a pair whose key matches argument k, then return the 
-// corresponding value, otherwise return NULL.
-char* lookup(Dictionary D, char* k)
+// If Dictionary D contains a (key, value) pair whose key matches k (i.e. if
+// KEY_CMP(key, k)==0), then returns value. If D contains no such pair, then
+// returns VAL_UNDEF.
+VAL_TYPE lookup(Dictionary D, KEY_TYPE k)
 {
-	// check to see if the Dictionary is not NULL
 	if(D == NULL)
 	{
-		fprintf(stderr, "Dictionary Error: calling lookup() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Access function: calling getUnique() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
 	}
-
-	// generate the key's hash value!
-	int hashed = hash(k);
-
-	// check if Dicationary[hashed] is not NULL (i.e there is a page with the key's value!)
-	if(D->P[hashed]->head != NULL)
+	Node x = D->root;
+	int match = 0;
+	if(D->size > 0)
 	{
-		// create an instance of a "temp" node
-		Node temp = D->P[hashed]->head;
-
-		// loop through the "page's" size
-		for(int i = 0; i < D->P[hashed]->numPairs; i++)
+		while(x != NULL && match == 0)
 		{
-			// if the page's key matches the given key
-			if(!(strcmp(temp->key,k))) return temp-> value;
-			else temp = temp->next;
+			if(KEY_CMP(k,x->key) == 0) match = 1;
+			else if(KEY_CMP(k,x->key) < 0) x = x->left;
+			else x = x->right;
 		}
+		if(match && (x != NULL)) return x->value;
 	}
-	return NULL;
-}	
+	return VAL_UNDEF;
+}
 
+
+// Manipulation procedures ----------------------------------------------------
 
 // insert()
-// Insert the pair (k,v) into D.
-// Pre: lookup(D, k)==NULL (D does not contain a pair whose first member is k.)
-void insert(Dictionary D, char* k, char* v)
+// Insert the pair (k,v) into Dictionary D. 
+// If getUnique(D) is false (0), then there are no preconditions.
+// If getUnique(D) is true (1), then the precondition lookup(D, k)==VAL_UNDEF
+// is enforced. 
+void insert(Dictionary D, KEY_TYPE k, VAL_TYPE v)
 {
-	// check to see if the Dictionary is not NULL
 	if(D == NULL)
 	{
-		fprintf(stderr, "Dictionary Error: calling insert() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Manipulation Function: calling insert() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
 	}
-
-	int hashed = hash(k);
-	if(D->P[hashed]-> head == NULL && D->P[hashed]->tail == NULL && D->P[hashed]->numPairs == 0)
+	if(getUnique(D))
 	{
-		D->P[hashed]->head = newNode(k,v);
+		if(lookup(D,k) != VAL_UNDEF)
+		{
+			fprintf(stderr, "Manipulation Function: calling insert() on duplicate key reference\n");
+			exit(EXIT_FAILURE);			
+		}
 	}
-	else if( D->P[hashed]-> head != NULL && D->P[hashed]->tail == NULL && D->P[hashed]->numPairs == 1)
+	Node new = newNode(k,v);
+	Node y = NULL;
+	Node x = D->root;
+	int level = -1;
+	while(x != NULL)
 	{
-		D->P[hashed]->tail = D->P[hashed]->head;
-		D->P[hashed]->head = newNode(k,v);
-		D->P[hashed]->head->next = D->P[hashed]->tail;
-		D->P[hashed]->tail->prev = D->P[hashed]->head;
+		y = x;
+		if(KEY_CMP(k,x->key) < 0) x = x->left;
+		else x = x->right;
+		level++;
 	}
-	else if(D->P[hashed]->head != NULL && D->P[hashed]->tail != NULL && D->P[hashed]->numPairs > 1)
-	{
-		Node new = newNode(k,v);
-		D->P[hashed]->head->prev = new;
-		new->next = D->P[hashed]->head;
-		D->P[hashed]->head = new;
-	}
-	D->P[hashed]->numPairs++;
-	D->usedPages++;
-	
+	new->parent = y;
+	if(D->size == 0 || y == NULL) D->root = new;
+	else if (KEY_CMP(k,y->key) < 0) y->left = new;
+	else y->right = new;
+	D->size++;
 }
 
 // delete()
-// Remove pair whose first member is the argument k from D.
-// Pre: lookup(D,k)!=NULL (D contains a pair whose first member is k.)
-void delete(Dictionary D, char* k)
+// Remove the pair whose key is k from Dictionary D.
+// Pre: lookup(D,k)!=VAL_UNDEF (i.e. D contains a pair whose key is k.)
+void delete(Dictionary D, KEY_TYPE k)
 {
-	// check to see if the Dictionary is not NULL
 	if(D == NULL)
 	{
-		fprintf(stderr, "Dictionary Error: calling delete() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Manipulation Function: calling delete() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
 	}
-
-	if(findKey(D,k) != NULL)
+	if(lookup(D,k) != VAL_UNDEF)
 	{
-		Node temp = findKey(D,k);
-
-		// if temp->next == NULL && temp->prev == NULL (i.e empty D or only head)
-		if(temp->next == NULL && temp->prev == NULL && D->P[hash(k)]->numPairs == 1)
+		if(D->cursor != NULL)
 		{
-			makePagesEmpty(D->P[hash(k)]);
-			D->P[hash(k)]->numPairs++;
+			if(KEY_CMP(D->cursor->key,k)==0) D->cursor = NULL;
 		}
-		// if temp->next == NULL (i.e removing the tail)
-		else if(temp->next == NULL && temp->prev != NULL)
+		Node target = D->root;
+		int match = 0;
+		while(match == 0)
 		{
-			D->P[hash(k)]->tail = temp->prev;
-			freeNode(&temp->next);
-			temp->next = NULL;
-			D->P[hash(k)]->tail->next = NULL;
-
-			if(D->P[hash(k)]->numPairs == 2) D->P[hash(k)]->tail = NULL;
-			freeNode(&temp);
+			if(KEY_CMP(k,target->key) == 0) match = 1;
+			else if(KEY_CMP(k,target->key) < 0) target = target->left;
+			else target = target->right;
 		}
-		// if temp->prev == NULL (i.e removing the head)
-		else if(temp->prev == NULL && temp->next != NULL)
+
+		/////////////////////////////////////////////////////////////////
+
+		if(target->left == NULL) Transplant(D,target,target->right);
+		else if(target->right == NULL) Transplant(D,target,target->left);
+		else
 		{
-			D->P[hash(k)]->head = temp->next;
-			freeNode(&temp->prev);
-			temp->prev = NULL;
-			D->P[hash(k)]->head->prev = NULL;
-			if(D->P[hash(k)]->numPairs == 2)
+			Node Y = TreeMinimum(target->right);
+			if(Y->parent != target)
 			{
-				D->P[hash(k)]->tail = NULL;
-				D->P[hash(k)]->head->next = NULL;
+				Transplant(D,Y,Y->right);
+				Y->right = target->right;
+				Y->right->parent = Y;
 			}
-			freeNode(&temp);
+			Transplant(D,target,Y);
+			Y->left = target->left;
+			Y->left->parent = Y;
 		}
-		// if temp->prev != NULL && temp->next != NULL (i.e removing middle node)
-		else if(temp->next != NULL && temp->prev != NULL)
-		{
-			temp->next->prev = temp->prev;
-			temp->prev->next = temp->next;
-			freeNode(&temp);
-		}
-		D->P[hash(k)]->numPairs--;
-		D->usedPages--;
+		freeNode(&target);
+		D->size--;
 	}
 }
 
 // makeEmpty()
-// Reset D to the empty state, the empty set of pairs.
+// Reset Dictionary D to the empty state, containing no pairs.
 void makeEmpty(Dictionary D)
 {
-	// check to see if the Dictionary is not NULL
 	if(D == NULL)
 	{
-		fprintf(stderr, "Dictionary Error: calling makeEmpty() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Manipulation Function: calling makeEmpty() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
 	}
-	for(int i = 0; i < D->maxPages; i++)
+	D->cursor = D->max = D->min = NULL;
+	if(D->size > 0)
 	{
-		freePages(D->P[i]);
+		while(D->root != NULL && size > 0) delete(D,D->root->key);
 	}
-	free(D->P);
-	D->P = calloc(tableSize,sizeof(PageObj));
-	for(int i = 0; i<tableSize; i++)
-	{
-		D->P[i] = newPage();
-	}
-	D->usedPages = 0;
 }
 
-// makeEmpty()
-// Reset D to the empty state, the empty set of pairs.
-void makeErase(Dictionary D)
+// beginForward()
+// If D is non-empty, starts a forward iteration over D at the first key 
+// (as defined by the order operator KEY_CMP()), then returns the first
+// value. If D is empty, returns VAL_UNDEF. 
+VAL_TYPE beginForward(Dictionary D)
 {
-	// check to see if the Dictionary is not NULL
 	if(D == NULL)
 	{
-		fprintf(stderr, "Dictionary Error: calling makeEmpty() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Manipulation Function: calling beginForward() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
 	}
-	for(int i = 0; i < D->maxPages; i++)
+	if(size(D) != 0)
 	{
-		freePages(D->P[i]);
+		D->cursor = TreeMinimum(D->root);
+		return D->cursor->value;
 	}
-	free(D->P);
-	D->usedPages = 0;
+	return VAL_UNDEF;
+}
+
+// beginReverse()
+// If D is non-empty, starts a reverse iteration over D at the last key 
+// (as defined by the order operator KEY_CMP()), then returns the last
+// value. If D is empty, returns VAL_UNDEF.
+VAL_TYPE beginReverse(Dictionary D)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Manipulation Function: calling beginReverse() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(size(D) != 0)
+	{
+		D->cursor = TreeMaximum(D->root);
+		return D->cursor->value;
+	}
+	return VAL_UNDEF;
+}
+
+// currentKey()
+// If an iteration (forward or reverse) over D has started, returns the 
+// the current key. If no iteration is underway, returns KEY_UNDEF.
+KEY_TYPE currentKey(Dictionary D)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Manipulation Function: calling currentKey() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(D->cursor != NULL) return D->cursor->key;
+	return KEY_UNDEF;
+}
+
+// currentVal()
+// If an iteration (forward or reverse) over D has started, returns the 
+// value corresponding to the current key. If no iteration is underway, 
+// returns VAL_UNDEF.
+VAL_TYPE currentVal(Dictionary D)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Manipulation Function: calling currentVal() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(D->cursor != NULL) return D->cursor->value;
+	return VAL_UNDEF;
+}
+
+// next()
+// If an iteration (forward or reverse) over D has started, and has not
+// reached the last pair, moves to the next key in D (as defined by the 
+// order operator KEY_CMP()), and returns the value corresponding to the 
+// new key. If an iteration has started, and has reached the last pair,
+// ends the iteration and returns VAL_UNDEF. If no iteration is underway, 
+// returns VAL_UNDEF.
+VAL_TYPE next(Dictionary D)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Manipulation Function: calling next() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	if(D->cursor != NULL && D->size > 0)
+	{
+		D->cursor = TreeSuccessor(D->cursor);
+		if(D->cursor != NULL) return D->cursor->value;
+		else return VAL_UNDEF;
+	}
+	return VAL_UNDEF;
 }
 
 
-// Other Operations -----------------------------------------------------------
-
-// DictionaryToString()
-// Determines a text representation of the current state of Dictionary D. Each 
-// (key, value) pair is represented as the chars in key, followed by a space,
-// followed by the chars in value, followed by a newline '\n' char. The pairs 
-// occur in alphabetical order by key. The function returns a pointer to a char 
-// array, allocated from heap memory, containing the text representation 
-// described above, followed by a terminating null '\0' char. It is the 
-// responsibility of the calling function to free this memory.
-char* DictionaryToString(Dictionary D)
+// prev()
+// If an iteration (forward or reverse) over D has started, and has not
+// reached the first pair, moves to the previous key in D (as defined by the 
+// order operator KEY_CMP()), and returns the value corresponding to the 
+// new key. If an iteration has started, and has reached the first pair,
+// ends the iteration and returns VAL_UNDEF. If no iteration is underway, 
+// returns VAL_UNDEF. 
+VAL_TYPE prev(Dictionary D)
 {
-	// check to see if the Dictionary is not NULL
 	if(D == NULL)
 	{
-		fprintf(stderr, "Dictionary Error: calling DictionaryToString() on NULL Dictionary reference\n");
-		exit(EXIT_FAILURE);
+		fprintf(stderr, "Manipulation Function: calling prev() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
 	}
-	char* string;
-   	int length = countChars(D);
-   	string = calloc(length+1, sizeof(char));
-   	for(int i = 0; i< D->maxPages; i++)
-   	{
-   		if(D->P[i]->head != NULL)
-   		{
-   			Node temp = D->P[i]->head;
-   			char space[] = " ";
-		   	char* sp = space;
-		   	char newLine[] = "\n";
-		   	char* nL = newLine;
-   			while(temp != NULL)
-   			{
-		   		strcat(string,temp->key);
-		   		strcat(string,sp);
-		   		strcat(string,temp->value);
-		   		strcat(string,nL);
-		   		temp = temp->next;
-   			}
-   			freeNode(&temp);
-   		}
-   	}
-   	string[length] = '\0';
-    return string;
+	if(D->cursor != NULL && D->size > 0)
+	{
+		D->cursor = TreePredecessor(D->cursor);
+		if(D->cursor != NULL) return D->cursor->value;
+		else return VAL_UNDEF;
+	}
+	return VAL_UNDEF;
+}
+
+
+// Other operations -----------------------------------------------------------
+
+// printDictionary()
+// Prints a text representation of D to the file pointed to by out. Each key-
+// value pair is printed on a single line, with the two items separated by a
+// single space.  The pairs are printed in the order defined by the operator
+// KEY_CMP().
+void printDictionary(FILE* out, Dictionary D)
+{
+	if(D == NULL)
+	{
+		fprintf(stderr, "Manipulation Function: calling printDictionary() on NULL List reference\n");
+		exit(EXIT_FAILURE);			
+	}
+	inOrderTreeWalk(D->root);
 }

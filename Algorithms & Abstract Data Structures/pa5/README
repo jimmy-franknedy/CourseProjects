@@ -1,0 +1,13 @@
+/*********************************************************************************
+* Name: 			Jimmy Franknedy
+* CruzID:			jfrankne
+* Course: 			CSE 101 Spring 2020
+* File name: 		README
+* File Description: Descriptions of files Submitted
+*********************************************************************************/
+README 				Written by me, a catalog of submitted files and any notes to the grader
+Makefile 			Files used to make the programmable files operation for the PA
+Dictionary.h 		Provided to me, and not altered
+Dictionary.c 		Written by me, based on the file
+DictionaryTest.c 	Written by me, tesing the client of the Dictionary ADT
+Lex.c 				Written by me, the client for this project

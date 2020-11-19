@@ -1,0 +1,16 @@
+/*********************************************************************************
+* Name: 			Jimmy Franknedy
+* CruzID:			jfrankne
+* Course: 			CSE 101 Spring 2020
+* File name: 		README
+* File Description: Descriptions of files Submitted
+*********************************************************************************/
+
+List.c 				List Function File
+List.h				List Function Prototype File
+Graph.c 			Graph Function File
+Graph.h 			Graph Function Prototype File
+GraphTest.c 		Graph Function Test File
+FindPath.c 			Main Program for implementing the BFS algorithm
+Makefile 			Makefile which creates a FindPath executable
+README  			Files containing files submitted and details of their contents
